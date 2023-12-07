@@ -1,45 +1,59 @@
 class CustomersController < ApplicationController
-    before_action :set_customer, only: [ :show, :update, :destroy ]
-
+    before_action :set_customer, only: %i[show update destroy]
+  
     def index
-        @customers = Customer.all
-        
-        render json: @customers
+      @customers = Customer.includes(:adress).all
+      render_customers
     end
-
+  
     def show
-        render json: @customer
+      render_customer
     end
-
+  
     def create
-        @customer = Customer.new(customer_params)
-
-        if @customer.save
-            render json: @customer, status: :created
-        else
-            render json: @customer.errors, status: :unprocessable_entity
-        end
+      @customer = Customer.new(customer_params)
+  
+      if @customer.save
+        render_customer(status: :created)
+      else
+        render_errors(@customer)
+      end
     end
-
+  
     def update
-        if @customer.update(customer_params)
-            render json: @customer
-        else
-            render json: @customer.errors, status: :unprocessable_entity
-        end
+      if @customer.update(customer_params)
+        render_customer
+      else
+        render_errors(@customer)
+      end
     end
-
+  
     def destroy
-        @customer.destroy
+      @customer.destroy
     end
-
+  
     private
-
+  
     def set_customer
-        @customer = Customer.find(params[:id])
+      @customer = Customer.find(params[:id])
     end
-
+  
     def customer_params
-        params.require(:customer).permit(:first_name, :last_name)
+      params.require(:customer).permit(:first_name, :last_name, adress_attributes: %i[id street_name number neighborhood _destroy])
     end
-end
+  
+    def render_customer(options = {})
+      render json: @customer, include: { adress: { only: %i[street_name number neighborhood] } },
+             except: %i[created_at updated_at], **options
+    end
+  
+    def render_customers
+      render json: @customers, include: { adress: { only: %i[street_name number neighborhood] } },
+             except: %i[created_at updated_at]
+    end
+  
+    def render_errors(resource)
+      render json: resource.errors, status: :unprocessable_entity
+    end
+  end
+  
