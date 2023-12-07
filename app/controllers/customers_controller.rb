@@ -39,17 +39,22 @@ class CustomersController < ApplicationController
     end
   
     def customer_params
-      params.require(:customer).permit(:first_name, :last_name, adress_attributes: %i[id street_name number neighborhood _destroy])
+      params.require(:customer).permit(:first_name, :last_name, adress_attributes: %i[id street_name number neighborhood _destroy],
+                                                                contact_attributes: %i[id phone_number _destroy])
     end
   
     def render_customer(options = {})
-      render json: @customer, include: { adress: { only: %i[street_name number neighborhood] } },
-             except: %i[created_at updated_at], **options
+        render json: @customer, include: { 
+            adress: { only: %i[street_name number neighborhood] }, 
+            contact: { only: %i[ phone_number ] }
+        }, except: %i[created_at updated_at], **options
     end
   
     def render_customers
-      render json: @customers, include: { adress: { only: %i[street_name number neighborhood] } },
-             except: %i[created_at updated_at]
+        render json: @customers, include: { 
+            adress: { only: %i[street_name number neighborhood] },
+            contact: { only: %i[ phone_number ] }                            
+        }, except: %i[created_at updated_at]
     end
   
     def render_errors(resource)
